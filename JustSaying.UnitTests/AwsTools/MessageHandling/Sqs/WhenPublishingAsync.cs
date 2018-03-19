@@ -19,10 +19,11 @@ namespace JustSaying.UnitTests.AwsTools.MessageHandling.Sqs
         private const string Url = "https://blablabla/" + QueueName;
         private readonly GenericMessage _message = new GenericMessage {Content = "Hello"};
         private const string QueueName = "queuename";
+        private readonly MessageResponseHandler _messageResponseHandler = r => {};
 
         protected override SqsPublisher CreateSystemUnderTest()
         {
-            var sqs = new SqsPublisher(RegionEndpoint.EUWest1, QueueName, _sqs, 0, _serialisationRegister, Substitute.For<ILoggerFactory>());
+            var sqs = new SqsPublisher(RegionEndpoint.EUWest1, QueueName, _sqs, 0, _serialisationRegister, _messageResponseHandler, Substitute.For<ILoggerFactory>());
             sqs.Exists();
             return sqs;
         }

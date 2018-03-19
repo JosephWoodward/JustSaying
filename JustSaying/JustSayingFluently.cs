@@ -44,6 +44,8 @@ namespace JustSaying
             _awsClientFactoryProxy = awsClientFactoryProxy;
         }
 
+
+
         private static string GetMessageTypeName<T>() => typeof(T).ToTopicName();
 
         public virtual INamingStrategy GetNamingStrategy()
@@ -91,6 +93,7 @@ namespace JustSaying
                     topicName,
                     _awsClientFactoryProxy.GetAwsClientFactory().GetSnsClient(RegionEndpoint.GetBySystemName(region)),
                     Bus.SerialisationRegister,
+                    Bus.Config.RequestLogger,
                     _loggerFactory, snsWriteConfig);
 
                 eventPublisher.Create();
@@ -131,6 +134,7 @@ namespace JustSaying
                     _awsClientFactoryProxy.GetAwsClientFactory().GetSqsClient(regionEndpoint),
                     config.RetryCountBeforeSendingToErrorQueue,
                     Bus.SerialisationRegister,
+                    Bus.Config.RequestLogger,
                     _loggerFactory);
 
                 if (!eventPublisher.Exists())

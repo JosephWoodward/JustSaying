@@ -14,18 +14,23 @@ namespace JustSaying.AwsTools.MessageHandling
     {
         private readonly IAmazonSQS _client;
         private readonly IMessageSerialisationRegister _serialisationRegister;
+        private readonly MessageResponseHandler _messageResponseHandler;
 
-        public SqsPublisher(RegionEndpoint region, string queueName, IAmazonSQS client, int retryCountBeforeSendingToErrorQueue, IMessageSerialisationRegister serialisationRegister, ILoggerFactory loggerFactory)
+        public SqsPublisher(RegionEndpoint region, string queueName, IAmazonSQS client,
+            int retryCountBeforeSendingToErrorQueue, IMessageSerialisationRegister serialisationRegister,
+            MessageResponseHandler messageResponseHandler, ILoggerFactory loggerFactory)
             : base(region, queueName, client, retryCountBeforeSendingToErrorQueue, loggerFactory)
         {
             _client = client;
             _serialisationRegister = serialisationRegister;
+            _messageResponseHandler = messageResponseHandler;
         }
 
 #if AWS_SDK_HAS_SYNC
         public void Publish(Message message)
         {
             var request = BuildSendMessageRequest(message);
+            SendMessageResponse response = null;
 
             try
             {
@@ -37,22 +42,30 @@ namespace JustSaying.AwsTools.MessageHandling
                     $"Failed to publish message to SQS. QueueUrl: {request.QueueUrl} MessageBody: {request.MessageBody}",
                     ex);
             }
+            finally
+            {
+                _messageResponseHandler?.Invoke(new MessageResponse(response?.MessageId, response?.HttpStatusCode));
+            }
         }
 #endif
 
         public async Task PublishAsync(Message message)
         {
             var request = BuildSendMessageRequest(message);
-
+            SendMessageResponse response = null;
             try
             {
-                await _client.SendMessageAsync(request).ConfigureAwait(false);
+                response = await _client.SendMessageAsync(request).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
                 throw new PublishException(
                     $"Failed to publish message to SQS. QueueUrl: {request.QueueUrl} MessageBody: {request.MessageBody}",
                     ex);
+            }
+            finally
+            {
+                _messageResponseHandler?.Invoke(new MessageResponse(response?.MessageId, response?.HttpStatusCode));
             }
         }
 

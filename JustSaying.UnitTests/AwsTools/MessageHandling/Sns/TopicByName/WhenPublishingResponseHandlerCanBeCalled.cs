@@ -1,4 +1,3 @@
-using System;
 using System.Net;
 using System.Threading.Tasks;
 using Amazon.SimpleNotificationService;
@@ -16,19 +15,23 @@ using Xunit;
 
 namespace JustSaying.UnitTests.AwsTools.MessageHandling.Sns.TopicByName
 {
-    public class WhenPublishingAsyncExceptionCanBeThrown : XAsyncBehaviourTest<SnsTopicByName>
+    public class WhenPublishingResponseHandlerCanBeCalled : XAsyncBehaviourTest<SnsTopicByName>
     {
         private readonly IMessageSerialisationRegister _serialisationRegister = Substitute.For<IMessageSerialisationRegister>();
         private readonly IAmazonSimpleNotificationService _sns = Substitute.For<IAmazonSimpleNotificationService>();
         private const string TopicArn = "topicarn";
-        private readonly MessageResponseHandler _messageResponseHandler = r => {};
+        private const string MessageId = "12345";
+
+        private static MessageResponse response;
+
+        private readonly MessageResponseHandler _messageResponseHandler = r =>
+        {
+            response = r;
+        };
 
         protected override SnsTopicByName CreateSystemUnderTest()
         {
-            var topic = new SnsTopicByName("TopicName", _sns, _serialisationRegister, _messageResponseHandler, Substitute.For<ILoggerFactory>(), new SnsWriteConfiguration
-            {
-                HandleException = ex => false
-            });
+            var topic = new SnsTopicByName("TopicName", _sns, _serialisationRegister, _messageResponseHandler, Substitute.For<ILoggerFactory>(), Substitute.For<SnsWriteConfiguration>());
 
             topic.Exists();
             return topic;
@@ -42,33 +45,25 @@ namespace JustSaying.UnitTests.AwsTools.MessageHandling.Sns.TopicByName
 
         protected override Task When()
         {
-            _sns.PublishAsync(Arg.Any<PublishRequest>()).Returns(ThrowsException);
+            _sns.PublishAsync(Arg.Any<PublishRequest>()).Returns(Result);
             return Task.CompletedTask;
         }
 
-        [Fact]
-        public async Task ExceptionIsThrown()
+        private static Task<PublishResponse> Result(CallInfo arg)
         {
-            await Should.ThrowAsync<PublishException>(() => SystemUnderTest.PublishAsync(new GenericMessage()));
+            return Task.FromResult(new PublishResponse
+            {
+                MessageId = MessageId,
+                HttpStatusCode = HttpStatusCode.OK
+            });
         }
 
         [Fact]
-        public async Task ExceptionContainsContext()
+        public void FailSilently()
         {
-            try
-            {
-                await SystemUnderTest.PublishAsync(new GenericMessage());
-            }
-            catch (Exception e)
-            {
-                var exception = (WebException) e.InnerException;
-                exception.Status.ShouldBe(WebExceptionStatus.Timeout);
-            }
-        }
-
-        private static Task<PublishResponse> ThrowsException(CallInfo callInfo)
-        {
-            throw new WebException("Operation timed out", WebExceptionStatus.Timeout);
+            SystemUnderTest.PublishAsync(new GenericMessage()).Wait();
+            response.ResponseMessageId.ShouldBe(MessageId);
+            response.ResponseHttpStatusCode.ShouldBe(HttpStatusCode.OK);
         }
     }
 }

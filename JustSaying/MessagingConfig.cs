@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using JustSaying.AwsTools;
+using JustSaying.AwsTools.MessageHandling;
 
 namespace JustSaying
 {
@@ -17,6 +18,7 @@ namespace JustSaying
 
         public int PublishFailureReAttempts { get; set; }
         public int PublishFailureBackoffMilliseconds { get; set; }
+        public MessageResponseHandler RequestLogger { get; set; }
         public IReadOnlyCollection<string> AdditionalSubscriberAccounts { get; set; }
         public IList<string> Regions { get; private set; }
         public Func<string> GetActiveRegion { get; set; }
@@ -30,8 +32,8 @@ namespace JustSaying
             var duplicateRegion = Regions.GroupBy(x => x).FirstOrDefault(y => y.Count() > 1);
             if (duplicateRegion != null)
             {
-				throw new ArgumentException($"Region {duplicateRegion.Key} was added multiple times");				
-			}   
+				throw new ArgumentException($"Region {duplicateRegion.Key} was added multiple times");
+			}
 
         }
     }
