@@ -20,12 +20,12 @@ namespace JustSaying.UnitTests.AwsTools.MessageHandling.Sqs
         private const string Url = "https://blablabla/" + QueueName;
         private readonly DelayedMessage _message = new DelayedMessage(delaySeconds: 1);
         private const string QueueName = "queuename";
-        private readonly MessageResponseHandler _messageResponseHandler = r => {};
+        private readonly MessageResultLogger _messageResultLogger = r => {};
 
         protected override SqsPublisher CreateSystemUnderTest()
         {
             var sqs = new SqsPublisher(RegionEndpoint.EUWest1, QueueName, _sqs, 0,
-                _serialisationRegister, _messageResponseHandler, Substitute.For<ILoggerFactory>());
+                _serialisationRegister, _messageResultLogger, Substitute.For<ILoggerFactory>());
             sqs.Exists();
             return sqs;
         }

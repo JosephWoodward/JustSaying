@@ -18,7 +18,7 @@ namespace JustSaying
 
         public int PublishFailureReAttempts { get; set; }
         public int PublishFailureBackoffMilliseconds { get; set; }
-        public MessageResponseHandler RequestLogger { get; set; }
+        public MessageResultLogger RequestLogger { get; set; }
         public IReadOnlyCollection<string> AdditionalSubscriberAccounts { get; set; }
         public IList<string> Regions { get; private set; }
         public Func<string> GetActiveRegion { get; set; }

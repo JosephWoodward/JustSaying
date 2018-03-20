@@ -24,9 +24,9 @@ namespace JustSaying.AwsTools.MessageHandling
         }
 
         public SnsTopicByName(string topicName, IAmazonSimpleNotificationService client,
-            IMessageSerialisationRegister serialisationRegister, MessageResponseHandler messageResponseHandler,
+            IMessageSerialisationRegister serialisationRegister, MessageResultLogger messageResultLogger,
             ILoggerFactory loggerFactory, SnsWriteConfiguration snsWriteConfiguration)
-            : base(serialisationRegister, messageResponseHandler, loggerFactory, snsWriteConfiguration)
+            : base(serialisationRegister, messageResultLogger, loggerFactory, snsWriteConfiguration)
         {
             TopicName = topicName;
             Client = client;

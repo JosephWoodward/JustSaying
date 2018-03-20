@@ -14,16 +14,16 @@ namespace JustSaying.AwsTools.MessageHandling
     {
         private readonly IAmazonSQS _client;
         private readonly IMessageSerialisationRegister _serialisationRegister;
-        private readonly MessageResponseHandler _messageResponseHandler;
+        private readonly MessageResultLogger _messageResultLogger;
 
         public SqsPublisher(RegionEndpoint region, string queueName, IAmazonSQS client,
             int retryCountBeforeSendingToErrorQueue, IMessageSerialisationRegister serialisationRegister,
-            MessageResponseHandler messageResponseHandler, ILoggerFactory loggerFactory)
+            MessageResultLogger messageResultLogger, ILoggerFactory loggerFactory)
             : base(region, queueName, client, retryCountBeforeSendingToErrorQueue, loggerFactory)
         {
             _client = client;
             _serialisationRegister = serialisationRegister;
-            _messageResponseHandler = messageResponseHandler;
+            _messageResultLogger = messageResultLogger;
         }
 
 #if AWS_SDK_HAS_SYNC
@@ -44,7 +44,7 @@ namespace JustSaying.AwsTools.MessageHandling
             }
             finally
             {
-                _messageResponseHandler?.Invoke(new MessageResponse(response?.MessageId, response?.HttpStatusCode));
+                _messageResultLogger?.Invoke(new MessageResult(response?.MessageId, response?.HttpStatusCode));
             }
         }
 #endif
@@ -65,7 +65,7 @@ namespace JustSaying.AwsTools.MessageHandling
             }
             finally
             {
-                _messageResponseHandler?.Invoke(new MessageResponse(response?.MessageId, response?.HttpStatusCode));
+                _messageResultLogger?.Invoke(new MessageResult(response?.MessageId, response?.HttpStatusCode));
             }
         }
 

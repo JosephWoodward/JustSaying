@@ -15,23 +15,23 @@ using Xunit;
 
 namespace JustSaying.UnitTests.AwsTools.MessageHandling.Sns.TopicByName
 {
-    public class WhenPublishingResponseHandlerCanBeCalled : XAsyncBehaviourTest<SnsTopicByName>
+    public class WhenPublishingSnsResultLoggerCanBeCalled : XAsyncBehaviourTest<SnsTopicByName>
     {
         private readonly IMessageSerialisationRegister _serialisationRegister = Substitute.For<IMessageSerialisationRegister>();
         private readonly IAmazonSimpleNotificationService _sns = Substitute.For<IAmazonSimpleNotificationService>();
         private const string TopicArn = "topicarn";
         private const string MessageId = "12345";
 
-        private static MessageResponse response;
+        private static MessageResult _result;
 
-        private readonly MessageResponseHandler _messageResponseHandler = r =>
+        private readonly MessageResultLogger _messageResultLogger = r =>
         {
-            response = r;
+            _result = r;
         };
 
         protected override SnsTopicByName CreateSystemUnderTest()
         {
-            var topic = new SnsTopicByName("TopicName", _sns, _serialisationRegister, _messageResponseHandler, Substitute.For<ILoggerFactory>(), Substitute.For<SnsWriteConfiguration>());
+            var topic = new SnsTopicByName("TopicName", _sns, _serialisationRegister, _messageResultLogger, Substitute.For<ILoggerFactory>(), Substitute.For<SnsWriteConfiguration>());
 
             topic.Exists();
             return topic;
@@ -41,15 +41,18 @@ namespace JustSaying.UnitTests.AwsTools.MessageHandling.Sns.TopicByName
         {
             _sns.FindTopicAsync("TopicName")
                 .Returns(new Topic { TopicArn = TopicArn });
+            _sns.PublishAsync(Arg.Any<PublishRequest>())
+                .Returns(PublishResult);
         }
 
         protected override Task When()
         {
-            _sns.PublishAsync(Arg.Any<PublishRequest>()).Returns(Result);
+            SystemUnderTest.PublishAsync(new GenericMessage()).Wait();
+
             return Task.CompletedTask;
         }
 
-        private static Task<PublishResponse> Result(CallInfo arg)
+        private static Task<PublishResponse> PublishResult(CallInfo arg)
         {
             return Task.FromResult(new PublishResponse
             {
@@ -59,11 +62,10 @@ namespace JustSaying.UnitTests.AwsTools.MessageHandling.Sns.TopicByName
         }
 
         [Fact]
-        public void FailSilently()
+        public void ResponseHandlerHasBeenInvoked()
         {
-            SystemUnderTest.PublishAsync(new GenericMessage()).Wait();
-            response.ResponseMessageId.ShouldBe(MessageId);
-            response.ResponseHttpStatusCode.ShouldBe(HttpStatusCode.OK);
+            _result.ResponseMessageId.ShouldBe(MessageId);
+            _result.ResponseHttpStatusCode.ShouldBe(HttpStatusCode.OK);
         }
     }
 }

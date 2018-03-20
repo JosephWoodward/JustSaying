@@ -19,11 +19,11 @@ namespace JustSaying.UnitTests.AwsTools.MessageHandling.Sqs
         private const string Url = "https://blablabla/" + QueueName;
         private readonly GenericMessage _message = new GenericMessage {Content = "Hello"};
         private const string QueueName = "queuename";
-        private readonly MessageResponseHandler _messageResponseHandler = r => {};
+        private readonly MessageResultLogger _messageResultLogger = r => {};
 
         protected override SqsPublisher CreateSystemUnderTest()
         {
-            var sqs = new SqsPublisher(RegionEndpoint.EUWest1, QueueName, _sqs, 0, _serialisationRegister, _messageResponseHandler, Substitute.For<ILoggerFactory>());
+            var sqs = new SqsPublisher(RegionEndpoint.EUWest1, QueueName, _sqs, 0, _serialisationRegister, _messageResultLogger, Substitute.For<ILoggerFactory>());
             sqs.Exists();
             return sqs;
         }
@@ -43,7 +43,7 @@ namespace JustSaying.UnitTests.AwsTools.MessageHandling.Sqs
         [Fact]
         public void MessageIsPublishedToQueue()
         {
-            // ToDo: Can be better...
+            // ToDo: Could be better...
             _sqs.Received().SendMessageAsync(Arg.Is<SendMessageRequest>(x => x.MessageBody.Equals("serialized_contents")));
         }
 

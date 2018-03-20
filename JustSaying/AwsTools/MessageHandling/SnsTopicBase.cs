@@ -13,7 +13,7 @@ namespace JustSaying.AwsTools.MessageHandling
     public abstract class SnsTopicBase : IMessagePublisher
     {
         private readonly IMessageSerialisationRegister _serialisationRegister; // ToDo: Grrr...why is this here even. GET OUT!
-        private readonly MessageResponseHandler _messageResponseHandler;
+        private readonly MessageResultLogger _messageResultLogger;
         private readonly SnsWriteConfiguration _snsWriteConfiguration;
         public string Arn { get; protected set; }
         protected IAmazonSimpleNotificationService Client { get; set; }
@@ -27,11 +27,11 @@ namespace JustSaying.AwsTools.MessageHandling
             _eventLog = loggerFactory.CreateLogger("EventLog");
         }
 
-        protected SnsTopicBase(IMessageSerialisationRegister serialisationRegister, MessageResponseHandler messageResponseHandler,
+        protected SnsTopicBase(IMessageSerialisationRegister serialisationRegister, MessageResultLogger messageResultLogger,
             ILoggerFactory loggerFactory, SnsWriteConfiguration snsWriteConfiguration)
         {
             _serialisationRegister = serialisationRegister;
-            _messageResponseHandler = messageResponseHandler;
+            _messageResultLogger = messageResultLogger;
             _log = loggerFactory.CreateLogger("JustSaying");
             _eventLog = loggerFactory.CreateLogger("EventLog");
             _snsWriteConfiguration = snsWriteConfiguration;
@@ -74,7 +74,7 @@ namespace JustSaying.AwsTools.MessageHandling
             }
             finally
             {
-                _messageResponseHandler?.Invoke(new MessageResponse(response?.MessageId, response?.HttpStatusCode));
+                _messageResultLogger?.Invoke(new MessageResult(response?.MessageId, response?.HttpStatusCode));
             }
         }
 #endif
@@ -98,7 +98,7 @@ namespace JustSaying.AwsTools.MessageHandling
             }
             finally
             {
-                _messageResponseHandler?.Invoke(new MessageResponse(response?.MessageId, response?.HttpStatusCode));
+                _messageResultLogger?.Invoke(new MessageResult(response?.MessageId, response?.HttpStatusCode));
             }
         }
 

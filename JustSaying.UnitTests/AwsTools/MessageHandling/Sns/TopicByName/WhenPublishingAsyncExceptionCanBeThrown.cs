@@ -21,11 +21,11 @@ namespace JustSaying.UnitTests.AwsTools.MessageHandling.Sns.TopicByName
         private readonly IMessageSerialisationRegister _serialisationRegister = Substitute.For<IMessageSerialisationRegister>();
         private readonly IAmazonSimpleNotificationService _sns = Substitute.For<IAmazonSimpleNotificationService>();
         private const string TopicArn = "topicarn";
-        private readonly MessageResponseHandler _messageResponseHandler = r => {};
+        private readonly MessageResultLogger _messageResultLogger = r => {};
 
         protected override SnsTopicByName CreateSystemUnderTest()
         {
-            var topic = new SnsTopicByName("TopicName", _sns, _serialisationRegister, _messageResponseHandler, Substitute.For<ILoggerFactory>(), new SnsWriteConfiguration
+            var topic = new SnsTopicByName("TopicName", _sns, _serialisationRegister, _messageResultLogger, Substitute.For<ILoggerFactory>(), new SnsWriteConfiguration
             {
                 HandleException = ex => false
             });
